@@ -415,9 +415,7 @@ def _macos_confinement(sandbox_site_dir: str) -> Optional[Confinement]:
     # Creates the account tmp root, and with it the shared base denied below.
     writable_roots = _writable_roots()
     # Every account's tmp_root sits under one per-user temp base: deny it, re-allow only ours.
-    hidden_roots = _existing(
-        (str(studio_root()), str(shared_tmp_root()), os.path.expanduser("~"))
-    )
+    hidden_roots = _existing((str(studio_root()), str(shared_tmp_root()), os.path.expanduser("~")))
     profile = macos_profile(
         read_roots = read_roots,
         hidden_roots = hidden_roots,

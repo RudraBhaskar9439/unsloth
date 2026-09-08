@@ -1780,13 +1780,11 @@ class InputAudio(BaseModel):
 
 
 class InputAudioContentPart(BaseModel):
-
     type: Literal["input_audio"]
     input_audio: InputAudio
 
 
 class UnknownContentPart(BaseModel):
-
     type: str
 
     model_config = {"extra": "allow"}

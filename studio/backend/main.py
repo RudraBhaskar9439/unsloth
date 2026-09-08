@@ -684,6 +684,7 @@ async def lifespan(app: FastAPI):
 
     # Reap workers/runs orphaned by a previous crash, once per account database.
     from utils.account_context import OWNER as _owner_account, run_as as _run_as
+
     try:
         from core.training.account_jobs import startup_reconciliation_accounts
         _reconcile_accounts = startup_reconciliation_accounts()

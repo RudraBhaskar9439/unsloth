@@ -45,7 +45,6 @@ class FakeVideoBackend:
 
     def begin_generate(self, **kwargs):
         from utils.account_context import current_account
-
         self.started.append(current_account().username)
         return {"queued": 1}
 
@@ -54,7 +53,6 @@ class FakeVideoBackend:
 
     def cancel_generate(self, *args, **kwargs):
         from utils.account_context import current_account
-
         self.cancelled.append(current_account().username)
         return True
 

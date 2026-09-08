@@ -25,13 +25,11 @@ _retired: set[str] = set()
 def _multi_user() -> bool:
     # Lazy: the export worker imports this module on hosts without the auth stack.
     from auth import policy
-
     return policy.installation_is_multi_user()
 
 
 def _has_managed_accounts() -> bool:
     from auth import policy
-
     return policy.installation_has_managed_accounts()
 
 

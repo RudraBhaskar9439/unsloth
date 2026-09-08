@@ -72,7 +72,6 @@ _INFERENCE_ROUTES = frozenset(
 
 def is_empty_bearer(header: str) -> bool:
     from fastapi.security.utils import get_authorization_scheme_param
-
     scheme, token = get_authorization_scheme_param(header)
     return scheme.lower() == "bearer" and not token
 

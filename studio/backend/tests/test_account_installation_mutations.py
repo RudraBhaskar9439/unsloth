@@ -39,13 +39,11 @@ def _client(account, build):
 
 def _llama_app(app):
     from routes import llama
-
     app.include_router(llama.router, prefix = "/api/llama")
 
 
 def _shutdown_route():
     import main
-
     for route in main.app.routes:
         if getattr(route, "path", None) == "/api/shutdown" and "POST" in getattr(
             route, "methods", ()
@@ -54,10 +52,10 @@ def _shutdown_route():
     raise AssertionError("POST /api/shutdown is not registered")
 
 
-@pytest.mark.parametrize("path,payload", [("/api/llama/update", None), ("/api/llama/backend", {"backend": "cpu"})])
-def test_a_managed_account_cannot_replace_the_installation_executables(
-    monkeypatch, path, payload
-):
+@pytest.mark.parametrize(
+    "path,payload", [("/api/llama/update", None), ("/api/llama/backend", {"backend": "cpu"})]
+)
+def test_a_managed_account_cannot_replace_the_installation_executables(monkeypatch, path, payload):
     from utils import llama_cpp_update
 
     started = []

@@ -149,7 +149,8 @@ def _load_registry_module():
             chunks.append(seg)
     mod = {"active_generations": _load_active_generations()}
     exec(
-        "import threading, time\nfrom typing import Optional\n_account_cancel_key = lambda key: key\n" + "\n\n".join(chunks),
+        "import threading, time\nfrom typing import Optional\n_account_cancel_key = lambda key: key\n"
+        + "\n\n".join(chunks),
         mod,
     )
     return mod

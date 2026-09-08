@@ -411,7 +411,6 @@ _generation_lock = threading.Lock()
 def _note_generation_account() -> None:
     global _generation_account
     from utils.account_context import current_account
-
     with _generation_lock:
         _generation_account = current_account().account_id
 
@@ -421,7 +420,6 @@ def _generation_hidden(backend) -> bool:
         started_by = _generation_account
     if started_by is not None:
         from utils.account_context import current_account
-
         return account_access.managed_account() and started_by != current_account().account_id
     # Nothing tracked (no generation since this process started): fall back to residency.
     return account_access.resident_hidden("video") or (

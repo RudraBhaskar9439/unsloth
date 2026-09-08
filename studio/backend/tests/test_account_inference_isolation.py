@@ -395,9 +395,9 @@ def test_the_local_id_v1_models_publishes_is_usable_by_its_own_account(monkeypat
 
     for account in (ALICE, BOB):
         asyncio.run(resolve(account))
-        assert run_as(account, inference._own_local_model_for_alias, "my-model") == _row(
-            account
-        ).path
+        assert (
+            run_as(account, inference._own_local_model_for_alias, "my-model") == _row(account).path
+        )
         assert run_as(account, inference._own_local_model_for_alias, "other-model") is None
 
     monkeypatch.setattr(inference, "_managed_catalogs", {})

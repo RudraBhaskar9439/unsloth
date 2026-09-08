@@ -66,6 +66,7 @@ def shared_resident(monkeypatch):
         running.set()
         cancelled.wait(20)
         from core.inference.diffusion_families import DIFFUSION_CANCELLED_MSG
+
         raise RuntimeError(DIFFUSION_CANCELLED_MSG)
 
     backend = SimpleNamespace(
@@ -74,9 +75,7 @@ def shared_resident(monkeypatch):
         generate_progress = lambda: {"active": True, "step": 3, "total": 10},
         cancel_generate = lambda: (cancelled.set(), True)[1],
     )
-    monkeypatch.setattr(
-        diffusion_engine_router, "get_active_diffusion_engine", lambda: backend
-    )
+    monkeypatch.setattr(diffusion_engine_router, "get_active_diffusion_engine", lambda: backend)
     monkeypatch.setattr(gpu_arbiter, "_owner", "diffusion")
     monkeypatch.setattr(gpu_arbiter, "_owner_account", BOB.account_id)
     return SimpleNamespace(running = running, cancelled = cancelled)
@@ -138,9 +137,7 @@ def test_residency_still_governs_progress_and_cancel_with_no_generation_in_fligh
         generate_progress = lambda: {"active": False},
         cancel_generate = lambda: False,
     )
-    monkeypatch.setattr(
-        diffusion_engine_router, "get_active_diffusion_engine", lambda: backend
-    )
+    monkeypatch.setattr(diffusion_engine_router, "get_active_diffusion_engine", lambda: backend)
     monkeypatch.setattr(gpu_arbiter, "_owner", "diffusion")
     monkeypatch.setattr(gpu_arbiter, "_owner_account", BOB.account_id)
     with client_for(ALICE) as client:
@@ -148,8 +145,6 @@ def test_residency_still_governs_progress_and_cancel_with_no_generation_in_fligh
             "loaded": True,
             "yours": False,
         }
-        assert client.post("/api/inference/images/generate/cancel").json() == {
-            "cancelled": False
-        }
+        assert client.post("/api/inference/images/generate/cancel").json() == {"cancelled": False}
     with client_for(BOB) as client:
         assert client.get("/api/inference/images/generate-progress").json()["active"] is False
