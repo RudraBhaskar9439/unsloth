@@ -51,6 +51,7 @@ def client_for(account):
     app.dependency_overrides[get_current_subject] = subject
     app.dependency_overrides[allow_ambient_hf_token] = lambda: False
     app.include_router(inference.studio_router, prefix = "/api/inference")
+    app.include_router(inference.router, prefix = "/v1")
     return TestClient(app)
 
 
@@ -70,7 +71,13 @@ def shared_resident(monkeypatch):
         raise RuntimeError(DIFFUSION_CANCELLED_MSG)
 
     backend = SimpleNamespace(
-        status = lambda: {"loaded": True, "repo_id": "org/public-model"},
+        is_loaded = True,
+        status = lambda: {
+            "loaded": True,
+            "repo_id": "org/public-model",
+            "family": "z-image",
+            "base_repo": None,
+        },
         generate = generate,
         generate_progress = lambda: {"active": True, "step": 3, "total": 10},
         cancel_generate = lambda: (cancelled.set(), True)[1],
@@ -148,3 +155,45 @@ def test_residency_still_governs_progress_and_cancel_with_no_generation_in_fligh
         assert client.post("/api/inference/images/generate/cancel").json() == {"cancelled": False}
     with client_for(BOB) as client:
         assert client.get("/api/inference/images/generate-progress").json()["active"] is False
+
+
+def _start_alice_openai_generation(shared_resident):
+    """Alice generates through the OpenAI-compatible route on Bob's resident model."""
+    result = {}
+
+    def run():
+        with client_for(ALICE) as client:
+            result["response"] = client.post(
+                "/v1/images/generations",
+                json = {
+                    "prompt": "a sloth",
+                    "size": "256x256",
+                    "response_format": "b64_json",
+                },
+            )
+
+    thread = threading.Thread(target = run)
+    thread.start()
+    assert shared_resident.running.wait(20)
+    return thread, result
+
+
+def test_openai_image_generations_belong_to_the_account_that_started_them(shared_resident):
+    thread, result = _start_alice_openai_generation(shared_resident)
+    try:
+        with client_for(ALICE) as client:
+            progress = client.get("/api/inference/images/generate-progress").json()
+            assert progress["active"] is True and progress["step"] == 3
+        with client_for(BOB) as client:
+            assert client.get("/api/inference/images/generate-progress").json() == {
+                "loaded": True,
+                "yours": False,
+            }
+            assert client.post("/api/inference/images/generate/cancel").json() == {
+                "cancelled": False
+            }
+        assert not shared_resident.cancelled.is_set()
+    finally:
+        shared_resident.cancelled.set()
+        thread.join(20)
+    assert result["response"].status_code >= 400

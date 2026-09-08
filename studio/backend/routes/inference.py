@@ -35965,18 +35965,20 @@ async def _generate_openai_images(
         # Fall back to the resolved base repo so a local-path load still gets the right per-model steps/guidance.
         steps, guidance = default_generation_params(status.get("repo_id"), status.get("base_repo"))
         try:
-            result = await asyncio.to_thread(
-                backend.generate,
-                prompt = body.prompt,
-                width = width,
-                height = height,
-                steps = steps,
-                guidance = guidance,
-                batch_size = body.n,
-                expected_load = load_identity(
-                    status.get("repo_id"), status.get("base_repo"), status.get("family")
-                ),
-            )
+            # Same ownership scope as /images/generate.
+            with account_access.media_generation("diffusion"):
+                result = await asyncio.to_thread(
+                    backend.generate,
+                    prompt = body.prompt,
+                    width = width,
+                    height = height,
+                    steps = steps,
+                    guidance = guidance,
+                    batch_size = body.n,
+                    expected_load = load_identity(
+                        status.get("repo_id"), status.get("base_repo"), status.get("family")
+                    ),
+                )
             break
         except DiffusionModelReplacedError:
             if attempt > 0:
