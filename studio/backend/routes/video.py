@@ -1536,6 +1536,9 @@ async def _create_openai_video(
         logger.error("openai_videos.generate_failed: %s", exc, exc_info = True)
         raise HTTPException(status_code = 500, detail = "Video generation failed.")
 
+    # As on /video/generate: the clip belongs to the account that started it.
+    _note_generation_account()
+
     # begin_generate hands back the canvas it resolved. Without it a reference-image
     # request reported the family's first preset while the clip rendered at the source
     # aspect, so the job advertised one size and the finished record another.

@@ -41,12 +41,16 @@ class FakeVideoBackend:
         self.cancelled: list[str] = []
 
     def status(self):
-        return {"loaded": True, "repo_id": "public/video-model"}
+        return {
+            "loaded": True,
+            "repo_id": "public/video-model",
+            "defaults": {"fps": 24, "num_frames": 49, "frame_step": 4, "frame_offset": 1},
+        }
 
     def begin_generate(self, **kwargs):
         from utils.account_context import current_account
         self.started.append(current_account().username)
-        return {"queued": 1}
+        return {"queued": 1, "width": 512, "height": 512, "num_frames": 49, "fps": 24}
 
     def generate_progress(self):
         return {"active": False, "phase": "completed", "step": 5, "total": 5, "video": CLIP}
@@ -105,6 +109,7 @@ def _client(account):
 
     app.dependency_overrides[get_current_subject] = subject
     app.include_router(video.router, prefix = "/api/inference")
+    app.include_router(video.openai_router, prefix = "/v1")
     return TestClient(app)
 
 
@@ -128,3 +133,28 @@ def test_the_starting_account_owns_its_clip_and_the_models_loader_does_not(backe
     with _client(BOB) as client:
         assert client.post(cancel).json() == {"cancelled": True}
     assert backend.cancelled == ["bob"]
+
+
+def test_a_clip_started_on_the_openai_route_belongs_to_that_account_too(backend):
+    """POST /v1/videos records its owner exactly as POST /video/generate does."""
+    progress = "/api/inference/video/generate-progress"
+    cancel = "/api/inference/video/generate/cancel"
+
+    with _client(BOB) as client:
+        created = client.post(
+            "/v1/videos",
+            json = {
+                "prompt": "p",
+                "model": "public/video-model",
+                "seconds": "2",
+                "size": "512x512",
+            },
+        )
+        assert created.status_code == 200, created.text
+        assert backend.started == ["bob"]
+        assert client.get(progress).json()["video"]["prompt"] == CLIP["prompt"]
+
+    with _client(ALICE) as client:
+        assert client.get(progress).json() == {"loaded": True, "yours": False}
+        assert client.post(cancel).json() == {"cancelled": False}
+    assert backend.cancelled == []
