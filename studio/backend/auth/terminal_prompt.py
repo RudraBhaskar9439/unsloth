@@ -1,15 +1,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Copyright 2026-present the Unsloth AI Inc. team. All rights reserved. See /studio/LICENSE.AGPL-3.0
 
-"""Interactive terminal prompt that forces a bootstrap password change before
-Unsloth is exposed on a public Cloudflare URL (``--secure`` / ``--cloudflare``).
+"""Interactive terminal prompt that forces a bootstrap password change before Unsloth is exposed on a public
+Cloudflare URL (``--secure`` / ``--cloudflare``).
 
-Masked input echoes one ``*`` per keystroke (unlike ``getpass``). Works on
-Windows (``msvcrt``) and Linux/macOS (``termios``). All output goes to stderr so
-redirected stdout never swallows the prompt.
-
-Mirrored for the CLI at ``unsloth_cli/commands/_password_prompt.py`` (the CLI
-cannot import the Unsloth backend package); keep the two in sync.
+Masked input echoes one ``*`` per keystroke (unlike ``getpass``). Works on Windows (``msvcrt``) and Linux/macOS
+(``termios``). All output goes to stderr so redirected stdout never swallows the prompt. Mirrored for the CLI at
+``unsloth_cli/commands/_password_prompt.py`` (the CLI cannot import the Unsloth backend package); keep the two
+in sync.
 """
 
 from __future__ import annotations
@@ -40,12 +38,10 @@ def _getch_windows() -> str:  # pragma: no cover - exercised via fake on Linux C
 
 
 class _RestoreTtyOnSignals:
-    """Restore terminal attrs if SIGTERM/SIGHUP kills the prompt mid-read.
-
-    A finally block can't run when a signal terminates the process, leaving the
-    shared terminal in cbreak/no-echo. Best-effort: no-op off the main thread or
-    where the signals are absent.
-    """
+    """Restore terminal attrs if SIGTERM/SIGHUP kills the prompt mid-read. A finally block can't run when a
+        signal terminates the process, leaving the shared terminal in cbreak/no-echo. Best-effort: no-op off the
+        main thread or where the signals are absent.
+        """
 
     def __init__(self, fd: int, old_attrs) -> None:
         self._fd = fd
@@ -145,11 +141,9 @@ _getch: Callable[[], str] = _getch_windows if os.name == "nt" else _getch_posix
 
 
 def _read_password(prompt: str, *, out: "TextIO | None" = None) -> str:
-    """Read one masked line: echo ``*`` per char, support backspace editing.
-
-    Raises KeyboardInterrupt on Ctrl-C and EOFError on Ctrl-D/Ctrl-Z with an
-    empty buffer; the terminal is restored on every exit path.
-    """
+    """Read one masked line: echo ``*`` per char, support backspace editing. Raises KeyboardInterrupt on Ctrl-C
+        and EOFError on Ctrl-D/Ctrl-Z with an empty buffer; the terminal is restored on every exit path.
+        """
     if out is None:
         out = sys.stderr
     out.write(prompt)
@@ -193,12 +187,9 @@ def _read_password(prompt: str, *, out: "TextIO | None" = None) -> str:
 def should_prompt_password_change(
     *, tunnel_will_start: bool, requires_change: bool, stdin_isatty: bool, stderr_isatty: bool
 ) -> bool:
-    """Whether to block startup on an interactive terminal password change.
-
-    True only when the tunnel is actually about to start, the admin still has
-    the seeded password, and both stdin and stderr are real terminals (headless
-    launches keep the bootstrap-timeout protection instead of hanging).
-    """
+    """Whether to block startup on an interactive terminal password change. True only when the tunnel
+    is actually about to start, the admin still has the seeded password, and both stdin and stderr
+    are real terminals (headless launches keep the bootstrap-timeout protection instead of hanging)."""
     return tunnel_will_start and requires_change and stdin_isatty and stderr_isatty
 
 
@@ -210,11 +201,9 @@ def prompt_for_password_change(
     username: str = "unsloth",
     out: "TextIO | None" = None,
 ) -> bool:
-    """Force a new admin password before public exposure; True on success.
-
-    Loops until a valid, confirmed password is committed via ``apply_change``.
-    Ctrl-C / EOF returns False; the caller must then abort the launch.
-    """
+    """Force a new admin password before public exposure; True on success. Loops until a valid,
+    confirmed password is committed via ``apply_change``. Ctrl-C / EOF returns False; the caller
+    must then abort the launch."""
     if out is None:
         out = sys.stderr
     out.write(
@@ -256,13 +245,10 @@ def prompt_for_password_change(
 
 
 def resolve_supplied_password(cli_value: "str | None", out: "TextIO | None" = None) -> "str | None":
-    """Resolve a non-interactive initial admin password, or None if unset.
-
-    Precedence: an explicit ``--password`` (literal ``-`` reads a line from
-    stdin), then the ``UNSLOTH_STUDIO_PASSWORD`` env var; empty/omitted means off.
-    A literal argv value is visible in the process list, so a note points at the
-    env var or stdin instead. Mirror of the CLI helper -- keep the two in sync.
-    """
+    """Resolve a non-interactive initial admin password, or None if unset. Precedence: an explicit
+    ``--password`` (literal ``-`` reads a line from stdin), then the ``UNSLOTH_STUDIO_PASSWORD`` env
+    var; empty/omitted means off. A literal argv value is visible in the process list, so a note
+    points at the env var or stdin instead. Mirror of the CLI helper -- keep the two in sync."""
     if out is None:
         out = sys.stderr
     if cli_value == "-":
